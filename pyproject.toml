@@ -5,14 +5,35 @@ build-backend = "py_build_cmake.build"
 [project]
 name = 'cminpack_numba'
 version= '0.1.0'
-description = "Numba compatible wrapper of cminpack."
+description = "A numba compatible wrapper of cminpack."
 readme = 'README.md'
 license = {file = 'LICENSE'}
 authors = [{name = 'Chris Ninham', email = 'christopher.ninham@creatis.insa-lyon.fr'},]
-dependencies = ['numba', ]
+dependencies = ['numba', 'numpy'] # TODO: Add version of numba & numpy required
 
-[tool.black]
+[project.optional-dependencies]
+tests = ['pytest', 'pytest-benchmark', 'scipy', 'NumbaMinpack']
+dev = ['ruff',]
+
+[tool.ruff]
 line-length = 88
+
+[tool.ruff.lint]
+select = ['ALL']
+ignore = ['TD003']
+
+[tool.ruff.extend-per-file-ignores]
+"dpmpar.py" = ['ANN001', 'ANN202', 'ARG001']
+"enorm.py" = ['ANN001', 'ANN202', 'ARG001']
+"hybrd.py" = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
+"hybrj.py" = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
+"lmder.py" = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
+"lmdif.py" = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
+"lmstr.py" = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
+"utils.py" = ['ANN001', 'ANN202', 'ARG001', 'D103']
+
+[tool.pyright]
+reportInvalidTypeForm = false
 
 [tool.py-build-cmake.module]
 directory = "."

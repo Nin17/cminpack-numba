@@ -1,11 +1,13 @@
-"""
-Signatures for the functions passed to the cminpack functions.
-"""
-# pylint: disable=invalid-name
+"""Signatures for the functions passed to the cminpack functions."""
+
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 from numba import types
-from numba.core.typing import Signature
+
+if TYPE_CHECKING:
+    from numba.core.typing import Signature
 
 __all__ = [
     "hybrd_sig",
@@ -23,27 +25,27 @@ __all__ = [
 
 
 class CminpackSignature:
-    """
-    Signatures for the functions passed to the cminpack functions.
-    """
+    """Signatures for the functions passed to the cminpack functions."""
 
     @staticmethod
     def hybrd(
-        udata_type: types.Type = types.voidptr, dtype: types.Float = types.float64
+        udata_type: types.Type = types.voidptr,
+        dtype: types.Float = types.float64,
     ) -> Signature:
-        """_summary_
+        """Signature for the function passed to the `hybrd` & `shybrd` functions.
 
         Parameters
         ----------
         udata_type : types.Type, optional
-            _description_, by default types.voidptr
+            The type of udata, by default types.voidptr
         dtype : types.Float, optional
-            _description_, by default types.float64
+            The dtype, by default types.float64
 
         Returns
         -------
         Signature
-            _description_
+            The signature of the function
+
         """
         return types.intc(
             udata_type,  # *udata / *p
@@ -55,21 +57,23 @@ class CminpackSignature:
 
     @staticmethod
     def hybrj(
-        udata_type: types.Type = types.voidptr, dtype: types.Float = types.float64
+        udata_type: types.Type = types.voidptr,
+        dtype: types.Float = types.float64,
     ) -> Signature:
-        """_summary_
+        """Signature for the function passed to the `hybrj` & `shybrj` functions.
 
         Parameters
         ----------
         udata_type : types.Type, optional
-            _description_, by default types.voidptr
+            The type of udata, by default types.voidptr
         dtype : types.Float, optional
-            _description_, by default types.float64
+            The dtype, by default types.float64
 
         Returns
         -------
         Signature
-            _description_
+            The signature of the function
+
         """
         return types.intc(
             udata_type,  # *udata / *p
@@ -83,21 +87,23 @@ class CminpackSignature:
 
     @staticmethod
     def lmdif(
-        udata_type: types.Type = types.voidptr, dtype: types.Float = types.float64
+        udata_type: types.Type = types.voidptr,
+        dtype: types.Float = types.float64,
     ) -> Signature:
-        """_summary_
+        """Signature for the function passed to the `lmdif` & `slmdif` functions.
 
         Parameters
         ----------
         udata_type : types.Type, optional
-            _description_, by default types.voidptr
+            The type of udata, by default types.voidptr
         dtype : types.Float, optional
-            _description_, by default types.float64
+            The dtype, by default types.float64
 
         Returns
         -------
         Signature
-            _description_
+            The signature of the function
+
         """
         return types.intc(
             udata_type,  # *udata / *p
@@ -110,21 +116,23 @@ class CminpackSignature:
 
     @staticmethod
     def lmder(
-        udata_type: types.Type = types.voidptr, dtype: types.Float = types.float64
+        udata_type: types.Type = types.voidptr,
+        dtype: types.Float = types.float64,
     ) -> Signature:
-        """_summary_
+        """Signature for the function passed to the `lmder` & `slmder` functions.
 
         Parameters
         ----------
         udata_type : types.Type, optional
-            _description_, by default types.voidptr
+            The type of udata, by default types.voidptr
         dtype : types.Float, optional
-            _description_, by default types.float64
+            The dtype, by default types.float64
 
         Returns
         -------
         Signature
-            _description_
+            The signature of the function
+
         """
         return types.intc(
             udata_type,  # *udata / *p
@@ -139,21 +147,23 @@ class CminpackSignature:
 
     @staticmethod
     def lmstr(
-        udata_type: types.Type = types.voidptr, dtype: types.Float = types.float64
+        udata_type: types.Type = types.voidptr,
+        dtype: types.Float = types.float64,
     ) -> Signature:
-        """_summary_
+        """Signature for the function passed to the `lmstr` & `slmstr` functions.
 
         Parameters
         ----------
         udata_type : types.Type, optional
-            _description_, by default types.voidptr
+            The type of udata, by default types.voidptr
         dtype : types.Float, optional
-            _description_, by default types.float64
+            The dtype, by default types.float64
 
         Returns
         -------
         Signature
-            _description_
+            The signature of the function
+
         """
         return types.intc(
             udata_type,  # *udata / *p

@@ -539,7 +539,7 @@ def hybrd(
     ml = ml or n
     mu = mu or n
     epsfcn = epsfcn or finfo(x.dtype).eps
-    diag = diag or ones(n, dtype=x.dtype)
+    diag = ones(n, dtype=x.dtype) if diag is None else diag
     mode = mode or 1
     factor = factor or 100.0
     nprint = nprint or 0

@@ -507,7 +507,7 @@ def hybrj(
 
     xtol = xtol or 1.49012e-8
     maxfev = maxfev or 200 * (n + 1)
-    diag = diag or ones(n, dtype=x.dtype)  # ??? empty
+    diag = ones(n, dtype=x.dtype) if diag is None else diag
     mode = mode or 1
     factor = factor or 100.0
     nprint = nprint or 0

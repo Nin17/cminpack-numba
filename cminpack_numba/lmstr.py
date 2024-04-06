@@ -571,7 +571,7 @@ def lmstr(
     mode = mode or 1
     factor = factor or 100.0
     nprint = nprint or 0
-    diag = diag or ones(n, dtype=x.dtype)
+    diag = ones(n, dtype=x.dtype) if diag is None else diag
     maxfev = maxfev or 200 * (n + 1)
 
     return _lmstr(

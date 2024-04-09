@@ -1,213 +1,163 @@
-"""_summary_
-"""
+"""Python implementations of the tests from the minpack c-api test suite."""
 
-import numpy as np
-import pytest
-from numba import carray, cfunc
-from numpy.testing import assert_allclose
-from scipy.optimize import least_squares, leastsq
+from numba import carray, cfunc, njit
+from numpy import array, empty, finfo, float64, int32, ones, sqrt
+from numpy.testing import assert_allclose, assert_equal
 
-from cminpack_numba import lmdif1, lmdif_sig
+from cminpack_numba import enorm, lmdif, lmdif1, lmdif1_, lmdif_, lmdif_sig
+from cminpack_numba.utils import ptr_from_val
 
-try:
-    import NumbaMinpack
-except ImportError:
-    NumbaMinpack = None
+# ruff: noqa: ANN001, ARG001, S101, PLR2004
 
+UDATA = array(
+    [
+        1.4e-1,
+        1.8e-1,
+        2.2e-1,
+        2.5e-1,
+        2.9e-1,
+        3.2e-1,
+        3.5e-1,
+        3.9e-1,
+        3.7e-1,
+        5.8e-1,
+        7.3e-1,
+        9.6e-1,
+        1.34e0,
+        2.1e0,
+        4.39e0,
+    ],
+)
+REFERENCE = array([0.8241058e-1, 0.1133037e1, 0.2343695e1])
+TOL = sqrt(finfo(float64).eps)
 
-# --------------------------------------- func --------------------------------------- #
-
-
-# From: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.leastsq.html
-def func(x):
-    return 2.0 * (x - 3.0) ** 2 + 1.0
-
-
-def func_args(x, *args):
-    return args[0] * (x - args[1]) ** 2 + args[2]
-
-
-scipy_result_func = leastsq(func, 0)
-assert_allclose(scipy_result_func[0], np.array([2.99999999]))
-assert scipy_result_func[1] == 1
-
-
-@pytest.mark.benchmark(group="lmdif1_func")
-def test_func_leastsq(benchmark):
-    benchmark(leastsq, func, 0)
-
-
-@pytest.mark.benchmark(group="lmdif1_func")
-def test_func_args_leastsq(benchmark):
-    benchmark(leastsq, func_args, 0, args=(2.0, 3.0, 1.0))
-
-
-@pytest.mark.benchmark(group="lmdif1_func")
-def test_func_least_squares(benchmark):
-    benchmark(least_squares, func, 0, method="lm")
+M = 15
+N = 3
+LDFJAC = M
+X0 = ones(N)
+DIAG = ones(N)
+IWA = empty(N, dtype=int32)
+LWA = M * N + 5 * N + M
+WA = empty(LWA)
 
 
-@pytest.mark.benchmark(group="lmdif1_func")
-def test_func_args_least_squares(benchmark):
-    benchmark(least_squares, func_args, 0, method="lm", args=(2.0, 3.0, 1.0))
+def _check_results(x, fvec, info, tol=TOL):  # noqa: ANN202
+    assert_equal(info, 1)
+    assert_allclose(x, REFERENCE, atol=100 * tol)
+    assert_allclose(enorm(fvec), 0.9063596e-1, atol=tol)
 
 
 @cfunc(lmdif_sig)
-def func_numba(udata, m, n, x, fvec, iflag):
-    fvec[0] = 2.0 * (x[0] - 3.0) ** 2 + 1.0
+def trial_lmdif_fcn(udata, m, n, x, fvec, iflag):  # noqa: ANN201, D103, PLR0913
+    y = UDATA
+
+    if iflag == 0:
+        return 0
+
+    for i in range(m):
+        tmp1 = i + 1
+        tmp2 = 16 - i - 1
+        tmp3 = tmp2 if i >= 8 else tmp1
+
+        fvec[i] = y[i] - (x[0] + tmp1 / (x[1] * tmp2 + x[2] * tmp3))
+
     return 0
 
 
 @cfunc(lmdif_sig)
-def func_numba_udata(udata, m, n, x, fvec, iflag):
-    udata = carray(udata, (3,), np.float64)
-    fvec[0] = udata[0] * (x[0] - udata[1]) ** 2 + udata[2]
+def trial_lmdif_fcn_udata(udata, m, n, x, fvec, iflag):  # noqa: ANN201, D103, PLR0913
+    y = carray(udata, (15,), dtype=float64)
+
+    if iflag == 0:
+        return 0
+
+    for i in range(m):
+        tmp1 = i + 1
+        tmp2 = 16 - i - 1
+        tmp3 = tmp2 if i >= 8 else tmp1
+
+        fvec[i] = y[i] - (x[0] + tmp1 / (x[1] * tmp2 + x[2] * tmp3))
+
     return 0
 
 
-@pytest.mark.benchmark(group="lmdif1_func")
-def test_func_lmdif1(benchmark):
-    lmdif1_result = lmdif1(func_numba.address, 1, np.array([0.0]))
-    assert_allclose(scipy_result_func[0], lmdif1_result[0])
-    benchmark(lmdif1, func_numba.address, 1, np.array([0.0]))
+@njit
+def driver(address, udata=None):  # noqa: ANN201, D103
+    x = X0.copy()
+    diag = DIAG.copy()
+    fvec = empty(M)
+    nfevptr = ptr_from_val(int32(0))
+    fjac = empty((M, N))
+    qtf = empty(N)
+    wa1 = empty(N)
+    wa2 = empty(N)
+    wa3 = empty(N)
+    wa4 = empty(M)
+    ipvt = empty(N, dtype=int32)
+
+    args = address, M, N, x, fvec, TOL, TOL, 0.0, 2000, 0.0, diag, 1, 100.0, 0
+    args2 = nfevptr, fjac, LDFJAC, ipvt, qtf, wa1, wa2, wa3, wa4, udata
+    _, _, _, _, _, _, info = lmdif_(*args, *args2)
+
+    return x, fvec, info
 
 
-@pytest.mark.benchmark(group="lmdif1_func")
-def test_func_lmdif1_udata(benchmark):
-    udata = np.array([2.0, 3.0, 1.0])
-    lmdif1_result = lmdif1(func_numba_udata.address, 1, np.array([0.0]), udata=udata)
-    assert_allclose(scipy_result_func[0], lmdif1_result[0])
-    benchmark(lmdif1, func_numba_udata.address, 1, np.array([0.0]), udata=udata)
+def test_lmdif1() -> None:
+    """Python implementation of the minpack c-api lmdif1 test."""
+    x, fvec, info = lmdif1(trial_lmdif_fcn.address, M, X0, TOL)
+    _check_results(x, fvec, info)
 
 
-@pytest.mark.skipif(NumbaMinpack is None, reason="NumbaMinpack not installed")
-@pytest.mark.benchmark(group="lmdif1_func")
-def test_func_NumbaMinpack(benchmark):
-    @cfunc(NumbaMinpack.minpack_sig)
-    def func_numbaminpack(x, fvec, args):
-        fvec[0] = 2.0 * (x[0] - 3.0) ** 2 + 1.0
-
-    scipy_result = leastsq(func, 0)
-    lmdif1_result = NumbaMinpack.lmdif(func_numbaminpack.address, np.array([0.0]), 1)
-    assert_allclose(scipy_result[0], lmdif1_result[0])
-    benchmark(NumbaMinpack.lmdif, func_numbaminpack.address, np.array([0.0]), 1)
+def test_lmdif1_() -> None:
+    """Python implementation of the minpack c-api lmdif1 test."""
+    x = X0.copy()
+    fvec = empty(M)
+    _, _, info = lmdif1_(trial_lmdif_fcn.address, M, N, x, fvec, TOL, IWA, WA, LWA)
+    _check_results(x, fvec, info)
 
 
-@pytest.mark.skipif(NumbaMinpack is None, reason="NumbaMinpack not installed")
-@pytest.mark.benchmark(group="lmdif1_func")
-def test_func_NumbaMinpack_udata(benchmark):
-    @cfunc(NumbaMinpack.minpack_sig)
-    def func_numbaminpack(x, fvec, args):
-        fvec[0] = args[0] * (x[0] - args[1]) ** 2 + args[2]
-
-    scipy_result = leastsq(func, 0)
-    udata = np.array([2.0, 3.0, 1.0])
-    lmdif1_result = NumbaMinpack.lmdif(
-        func_numbaminpack.address, np.array([0.0]), 1, args=udata
-    )
-    assert_allclose(scipy_result[0], lmdif1_result[0])
-    benchmark(
-        NumbaMinpack.lmdif, func_numbaminpack.address, np.array([0.0]), 1, args=udata
-    )
+def test_lmdif() -> None:
+    """Python implementation of the minpack c-api lmdif test."""
+    args = trial_lmdif_fcn.address, M, X0, TOL, TOL, 0.0, 2000, 0.0, DIAG, 1, 100.0, 0
+    x, fvec, _, _, _, _, info = lmdif(*args)
+    _check_results(x, fvec, info)
 
 
-# ------------------------------------ rosenbrock ------------------------------------ #
+def test_lmdif_() -> None:
+    """Python implementation of the minpack c-api lmdif test."""
+    x, fvec, info = driver(trial_lmdif_fcn.address)
+    _check_results(x, fvec, info)
 
 
-# From: https://docs.scipy.org/doc/scipy/reference/generated/scipy.optimize.least_squares.html
-def rosenbrock(x):
-    return np.array([10 * (x[1] - x[0] ** 2), (1 - x[0])])
+def test_udata_lmdif1() -> None:
+    """Python implementation of the minpack c-api lmdif1 test."""
+    for i in (UDATA, UDATA.ctypes.data):
+        x, fvec, info = lmdif1(trial_lmdif_fcn_udata.address, M, X0, TOL, i)
+        _check_results(x, fvec, info)
 
 
-@cfunc(lmdif_sig)
-def rosenbrock_numba(udata, m, n, x, fvec, iflag):
-    fvec[0] = 10.0 * (x[1] - x[0] ** 2)
-    fvec[1] = 1.0 - x[0]
-    return 0
+def test_udata_lmdif1_() -> None:
+    """Python implementation of the minpack c-api lmdif1 test."""
+    address = trial_lmdif_fcn_udata.address
+    args = TOL, IWA, WA, LWA
+    for i in (UDATA, UDATA.ctypes.data):
+        x = X0.copy()
+        fvec = empty(M)
+        _, _, info = lmdif1_(address, M, N, x, fvec, *args, i)
+        _check_results(x, fvec, info)
 
 
-@cfunc(lmdif_sig)
-def rosenbrock_numba_udata(udata, m, n, x, fvec, iflag):
-    udata = carray(udata, (2,), np.float64)
-    fvec[0] = udata[0] * (x[1] - x[0] ** 2)
-    fvec[1] = udata[1] - x[0]
-    return 0
+def test_udata_lmdif() -> None:
+    """Python implementation of the minpack c-api lmdif1 test."""
+    address = trial_lmdif_fcn_udata.address
+    args = address, M, X0, TOL, TOL, 0.0, 2000, 0.0, DIAG, 1, 100.0, 0
+    for i in (UDATA, UDATA.ctypes.data):
+        x, fvec, _, _, _, _, info = lmdif(*args, i)
+        _check_results(x, fvec, info)
 
 
-def test_lmdif1_scipy_least_squares():
-    scipy_result = least_squares(rosenbrock, np.array([2.0, 2.0]))
-    assert_allclose(scipy_result.x, np.array([1.0, 1.0]))
-    lmdif1_result = lmdif1(rosenbrock_numba.address, 2, np.array([2.0, 2.0]))
-    assert_allclose(scipy_result.x, lmdif1_result[0])
-
-
-@pytest.mark.benchmark(group="lmdif1_rosenbrock")
-def test_leastsq_rosenbrock(benchmark):
-    benchmark(leastsq, rosenbrock, np.array([2.0, 2.0]))
-
-
-@pytest.mark.benchmark(group="lmdif1_rosenbrock")
-def test_least_squares_rosenbrock(benchmark):
-    benchmark(least_squares, rosenbrock, np.array([2.0, 2.0]), method="lm")
-
-
-@pytest.mark.benchmark(group="lmdif1_rosenbrock")
-def test_lmdif1_rosenbrock(benchmark):
-    scipy_result = least_squares(rosenbrock, np.array([2.0, 2.0]))
-    lmdif1_result = lmdif1(rosenbrock_numba.address, 2, np.array([2.0, 2.0]))
-    assert_allclose(scipy_result.x, lmdif1_result[0])
-    benchmark(lmdif1, rosenbrock_numba.address, 2, np.array([2.0, 2.0]))
-
-
-@pytest.mark.benchmark(group="lmdif1_rosenbrock")
-def test_lmdif1_rosenbrock_udata(benchmark):
-    scipy_result = least_squares(rosenbrock, np.array([2.0, 2.0]))
-    udata = np.array([10.0, 1.0])
-    lmdif1_result = lmdif1(
-        rosenbrock_numba.address, 2, np.array([2.0, 2.0]), udata=udata
-    )
-    assert_allclose(scipy_result.x, lmdif1_result[0])
-    benchmark(
-        lmdif1, rosenbrock_numba_udata.address, 2, np.array([2.0, 2.0]), udata=udata
-    )
-
-
-@pytest.mark.skipif(NumbaMinpack is None, reason="NumbaMinpack not installed")
-@pytest.mark.benchmark(group="lmdif1_rosenbrock")
-def test_lmdif1_rosenbrock_numbaminpack(benchmark):
-    @cfunc(NumbaMinpack.minpack_sig)
-    def rosenbrock_numbaminpack(x, fvec, args):
-        fvec[0] = 10.0 * (x[1] - x[0] ** 2)
-        fvec[1] = 1.0 - x[0]
-
-    scipy_result = least_squares(rosenbrock, np.array([2.0, 2.0]))
-    lmdif1_result = NumbaMinpack.lmdif(
-        rosenbrock_numbaminpack.address, np.array([2.0, 2.0]), 2
-    )
-    assert_allclose(scipy_result.x, lmdif1_result[0])
-    benchmark(
-        NumbaMinpack.lmdif, rosenbrock_numbaminpack.address, np.array([2.0, 2.0]), 2
-    )
-
-
-@pytest.mark.skipif(NumbaMinpack is None, reason="NumbaMinpack not installed")
-@pytest.mark.benchmark(group="lmdif1_rosenbrock")
-def test_lmdif1_rosenbrock_udata_numbaminpack(benchmark):
-    @cfunc(NumbaMinpack.minpack_sig)
-    def rosenbrock_numbaminpack(x, fvec, args):
-        fvec[0] = args[0] * (x[1] - x[0] ** 2)
-        fvec[1] = args[1] - x[0]
-
-    scipy_result = least_squares(rosenbrock, np.array([2.0, 2.0]))
-    udata = np.array([10.0, 1.0])
-    lmdif1_result = NumbaMinpack.lmdif(
-        rosenbrock_numbaminpack.address, np.array([2.0, 2.0]), 2, args=udata
-    )
-    assert_allclose(scipy_result.x, lmdif1_result[0])
-    benchmark(
-        NumbaMinpack.lmdif,
-        rosenbrock_numbaminpack.address,
-        np.array([2.0, 2.0]),
-        2,
-        args=udata,
-    )
+def test_udata_lmdif_() -> None:
+    """Python implementation of the minpack c-api lmdif test."""
+    for i in (UDATA, UDATA.ctypes.data):
+        x, fvec, info = driver(trial_lmdif_fcn_udata.address, i)
+        _check_results(x, fvec, info)

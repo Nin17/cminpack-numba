@@ -1,15 +1,15 @@
 [build-system]
-requires = ["py-build-cmake~=0.1.8"]
-build-backend = "py_build_cmake.build"
+build-backend = 'py_build_cmake.build'
+requires = ['py-build-cmake~=0.1.8']
 
 [project]
 name = 'cminpack_numba'
 version= '0.1.0'
-description = "A numba compatible wrapper of cminpack."
+description = 'A numba compatible wrapper of cminpack.'
 readme = 'README.md'
 license = {file = 'LICENSE'}
 authors = [{name = 'Chris Ninham', email = 'christopher.ninham@creatis.insa-lyon.fr'},]
-dependencies = ['numba', 'numpy'] # TODO: Add version of numba & numpy required
+dependencies = ['numba', 'numpy'] # TODO(nin17): Add version of numba & numpy required
 
 [project.optional-dependencies]
 tests = ['pytest', 'pytest-benchmark', 'scipy', 'NumbaMinpack']
@@ -23,30 +23,30 @@ select = ['ALL']
 ignore = ['TD003']
 
 [tool.ruff.extend-per-file-ignores]
-"dpmpar.py" = ['ANN001', 'ANN202', 'ARG001']
-"enorm.py" = ['ANN001', 'ANN202', 'ARG001']
-"hybrd.py" = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
-"hybrj.py" = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
-"lmder.py" = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
-"lmdif.py" = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
-"lmstr.py" = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
-"utils.py" = ['ANN001', 'ANN202', 'ARG001', 'D103']
+'dpmpar.py' = ['ANN001', 'ANN202', 'ARG001']
+'enorm.py' = ['ANN001', 'ANN202', 'ARG001']
+'hybrd.py' = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
+'hybrj.py' = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
+'lmder.py' = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
+'lmdif.py' = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
+'lmstr.py' = ['ANN001', 'ANN202', 'ARG001', 'ARG005', 'PLR0913']
+'utils.py' = ['ANN001', 'ANN202', 'ARG001', 'D103']
 
 [tool.pyright]
 reportInvalidTypeForm = false
 
 [tool.py-build-cmake.module]
-directory = "."
+directory = '.'
 
 [tool.py-build-cmake.sdist]
-include = ["cminpack/CMakeLists.txt", "cminpack/*"]
+include = ['cminpack/CMakeLists.txt', 'cminpack/*']
 
 [tool.py-build-cmake.cmake]
-minimum_version = "3.17"
-build_type = "RelWithDebInfo"
-source_path = "cminpack"
-build_args = ["-j"]
+minimum_version = '3.17'
+build_type = 'RelWithDebInfo'
+source_path = 'cminpack'
+build_args = ['-j']
 [tool.py-build-cmake.cmake.options]
-BUILD_SHARED_LIBS = "ON"
-USE_BLAS = "OFF" # TODO: Add blas support
-CMINPACK_LIB_INSTALL_DIR="cminpack_numba"
+BUILD_SHARED_LIBS = 'ON'
+USE_BLAS = 'OFF' # TODO(nin17): Add blas support
+CMINPACK_LIB_INSTALL_DIR='cminpack_numba'

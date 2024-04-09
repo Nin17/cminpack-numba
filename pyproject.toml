@@ -50,3 +50,9 @@ build_args = ['-j']
 BUILD_SHARED_LIBS = 'ON'
 USE_BLAS = 'OFF' # TODO(nin17): Add blas support
 CMINPACK_LIB_INSTALL_DIR='cminpack_numba'
+
+
+[tool.pytest.ini_options]
+addopts = [
+    "--import-mode=importlib",
+]

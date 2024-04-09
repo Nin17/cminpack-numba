@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from numba import extending, njit, types
-from numpy import array, bool_, empty, floating, int32, ones
+from numpy import empty, floating, int32, ones
 
 from ._cminpack import Cminpack
 from .utils import _check_dtype, ptr_from_val, ptr_int32, val_from_ptr
@@ -21,16 +21,16 @@ def _lmstr1(fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata):
     raise NotImplementedError
 
 
-@extending.overload
+@extending.overload(_lmstr1)
 def _lmstr1_overload(fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata):
     _check_dtype((fvec, fjac, wa), x.dtype)
-    _lmstr1_cfunc = Cminpack.lmstr1(x.dtype)
+    lmstr1_external = Cminpack.lmstr1(x.dtype)
 
     @extending.register_jitable
     def impl(fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata):
-        info = _lmstr1_cfunc(
+        info = lmstr1_external(
             fcn,
-            udata.ctypes,
+            udata,
             m,
             n,
             x.ctypes,
@@ -44,7 +44,23 @@ def _lmstr1_overload(fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata
         )
         return x, fvec, fjac, ipvt, info
 
-    if udata is types.none:
+    if isinstance(udata, types.Array):
+        return lambda fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata: impl(
+            fcn,
+            m,
+            n,
+            x,
+            fvec,
+            fjac,
+            ldfjac,
+            tol,
+            ipvt,
+            wa,
+            lwa,
+            udata.ctypes,
+        )
+
+    if udata is not types.none:
         return impl
 
     return lambda fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata: impl(
@@ -59,7 +75,7 @@ def _lmstr1_overload(fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata
         ipvt,
         wa,
         lwa,
-        array(0, dtype=bool_),
+        0,
     )
 
 
@@ -124,18 +140,6 @@ def lmstr1_(
 
 
 @njit
-def _lmstr1_args(m, x):
-    # ??? do i need the int32 here?
-    n = int32(x.size)
-    lwa = int32(5 * n + m)
-    fvec = empty(m, dtype=x.dtype)
-    fjac = empty((m, n), dtype=x.dtype)
-    wa = empty(lwa, dtype=x.dtype)
-    ipvt = empty(n, dtype=int32)
-    return n, lwa, fvec, fjac, wa, ipvt
-
-
-@njit
 def lmstr1(
     fcn: int64,
     m: int32,
@@ -176,8 +180,13 @@ def lmstr1(
 
     """
     tol = tol or 1.49012e-8
-    n, lwa, fvec, fjac, wa, ipvt = _lmstr1_args(m, x)
-    return _lmstr1(fcn, m, n, x, fvec, fjac, n, tol, ipvt, wa, lwa, udata)
+    n = int32(x.size)
+    lwa = int32(5 * n + m)
+    fvec = empty(m, dtype=x.dtype)
+    fjac = empty((m, n), dtype=x.dtype)
+    wa = empty(lwa, dtype=x.dtype)
+    ipvt = empty(n, dtype=int32)
+    return _lmstr1(fcn, m, n, x.copy(), fvec, fjac, n, tol, ipvt, wa, lwa, udata)
 
 
 # --------------------------------------- lmstr -------------------------------------- #
@@ -240,7 +249,7 @@ def _lmstr_overload(
     udata,
 ):
     _check_dtype((fvec, fjac, qtf, wa1, wa2, wa3, wa4), x.dtype)
-    _lmstr_cfunc = Cminpack.lmstr(x.dtype)
+    lmstr_external = Cminpack.lmstr(x.dtype)
 
     @extending.register_jitable
     def impl(
@@ -269,9 +278,9 @@ def _lmstr_overload(
         wa4,
         udata,
     ):
-        info = _lmstr_cfunc(
+        info = lmstr_external(
             fcn,
-            udata.ctypes,
+            udata,
             m,
             n,
             x.ctypes,
@@ -298,6 +307,59 @@ def _lmstr_overload(
         _nfev = val_from_ptr(nfev)
         _njev = val_from_ptr(njev)
         return x, fvec, fjac, ipvt, qtf, _nfev, _njev, info
+
+    if isinstance(udata, types.Array):
+        return (
+            lambda fcn,
+            m,
+            n,
+            x,
+            fvec,
+            fjac,
+            ldfjac,
+            ftol,
+            xtol,
+            gtol,
+            maxfev,
+            diag,
+            mode,
+            factor,
+            nprint,
+            nfev,
+            njev,
+            ipvt,
+            qtf,
+            wa1,
+            wa2,
+            wa3,
+            wa4,
+            udata: impl(
+                fcn,
+                m,
+                n,
+                x,
+                fvec,
+                fjac,
+                ldfjac,
+                ftol,
+                xtol,
+                gtol,
+                maxfev,
+                diag,
+                mode,
+                factor,
+                nprint,
+                nfev,
+                njev,
+                ipvt,
+                qtf,
+                wa1,
+                wa2,
+                wa3,
+                wa4,
+                udata.ctypes,
+            )
+        )
 
     if udata is not types.none:
         return impl
@@ -350,7 +412,7 @@ def _lmstr_overload(
             wa2,
             wa3,
             wa4,
-            array(0, dtype=bool_),
+            0,
         )
     )
 
@@ -481,24 +543,6 @@ def lmstr_(
 
 
 @njit
-def _lmstr_args(m, x):
-    n = int32(x.size)
-    fvec = empty(m, dtype=x.dtype)
-    fjac = empty((m, n), dtype=x.dtype)
-    ldfjac = m
-    nfevptr = ptr_from_val(int32(0))
-    njevptr = ptr_from_val(int32(0))
-    ipvt = empty(n, dtype=int32)
-    qtf = empty(n, dtype=x.dtype)
-    wa = empty(3 * n + m, dtype=x.dtype)
-    wa1 = wa[:n]
-    wa2 = wa[n : 2 * n]
-    wa3 = wa[2 * n : 3 * n]
-    wa4 = wa[3 * n :]
-    return n, fvec, nfevptr, njevptr, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4
-
-
-@njit
 def lmstr(
     fcn: int64,
     m: int32,
@@ -559,12 +603,19 @@ def lmstr(
         _description_
 
     """
-    n, fvec, nfevptr, njevptr, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4 = (
-        _lmstr_args(
-            m,
-            x,
-        )
-    )
+    n = int32(x.size)
+    fvec = empty(m, dtype=x.dtype)
+    fjac = empty((m, n), dtype=x.dtype)
+    ldfjac = m
+    nfevptr = ptr_from_val(int32(0))
+    njevptr = ptr_from_val(int32(0))
+    ipvt = empty(n, dtype=int32)
+    qtf = empty(n, dtype=x.dtype)
+    wa = empty(3 * n + m, dtype=x.dtype)
+    wa1 = wa[:n]
+    wa2 = wa[n : 2 * n]
+    wa3 = wa[2 * n : 3 * n]
+    wa4 = wa[3 * n :]
     ftol = ftol or 1.49012e-8
     xtol = xtol or 1.49012e-8
     gtol = gtol or 0.0

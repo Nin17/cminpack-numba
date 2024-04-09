@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from numba import extending, njit, types
-from numpy import array, bool_, empty, finfo, floating, int32, ones
+from numpy import empty, finfo, floating, int32, ones
 
 from ._cminpack import Cminpack
 from .utils import _check_dtype, ptr_from_val, ptr_int32, val_from_ptr
@@ -24,13 +24,13 @@ def _lmdif1(fcn, m, n, x, fvec, tol, iwa, wa, lwa, udata):
 @extending.overload(_lmdif1)
 def _lmdif1_overload(fcn, m, n, x, fvec, tol, iwa, wa, lwa, udata):
     _check_dtype((fvec, wa), x.dtype)
-    _lmdif1_cfunc = Cminpack.lmdif1(x.dtype)
+    lmdif1_external = Cminpack.lmdif1(x.dtype)
 
     @extending.register_jitable
     def impl(fcn, m, n, x, fvec, tol, iwa, wa, lwa, udata):
-        info = _lmdif1_cfunc(
+        info = lmdif1_external(
             fcn,
-            udata.ctypes,
+            udata,
             m,
             n,
             x.ctypes,
@@ -41,6 +41,20 @@ def _lmdif1_overload(fcn, m, n, x, fvec, tol, iwa, wa, lwa, udata):
             lwa,
         )
         return x, fvec, info
+
+    if isinstance(udata, types.Array):
+        return lambda fcn, m, n, x, fvec, tol, iwa, wa, lwa, udata: impl(
+            fcn,
+            m,
+            n,
+            x,
+            fvec,
+            tol,
+            iwa,
+            wa,
+            lwa,
+            udata.ctypes,
+        )
 
     if udata is not types.none:
         return impl
@@ -54,7 +68,7 @@ def _lmdif1_overload(fcn, m, n, x, fvec, tol, iwa, wa, lwa, udata):
         iwa,
         wa,
         lwa,
-        array(0, dtype=bool_),
+        0,
     )
 
 
@@ -107,17 +121,6 @@ def lmdif1_(
 
 
 @njit
-def _lmdif1_args(m, x):
-    # ??? do i need the int32 here?
-    n = int32(x.size)
-    lwa = int32(m * n + 5 * n + m)
-    fvec = empty(m, dtype=x.dtype)
-    wa = empty(lwa, dtype=x.dtype)
-    iwa = empty(n, dtype=int32)
-    return n, lwa, fvec, wa, iwa
-
-
-@njit
 def lmdif1(
     fcn: int64,
     m: int32,
@@ -148,7 +151,11 @@ def lmdif1(
 
     """
     tol = tol or 1.49012e-8
-    n, lwa, fvec, wa, iwa = _lmdif1_args(m, x)
+    n = int32(x.size)
+    lwa = int32(m * n + 5 * n + m)
+    fvec = empty(m, dtype=x.dtype)
+    wa = empty(lwa, dtype=x.dtype)
+    iwa = empty(n, dtype=int32)
     return _lmdif1(fcn, m, n, x.copy(), fvec, tol, iwa, wa, lwa, udata)
 
 
@@ -212,7 +219,7 @@ def _lmdif_overload(
     udata,
 ):
     _check_dtype((fvec, fjac, qtf, wa1, wa2, wa3, wa4), x.dtype)
-    _lmdif_cfunc = Cminpack.lmdif(x.dtype)
+    lmdif_external = Cminpack.lmdif(x.dtype)
 
     @extending.register_jitable
     def impl(
@@ -241,9 +248,9 @@ def _lmdif_overload(
         wa4,
         udata,
     ):
-        info = _lmdif_cfunc(
+        info = lmdif_external(
             fcn,
-            udata.ctypes,
+            udata,
             m,
             n,
             x.ctypes,
@@ -269,6 +276,59 @@ def _lmdif_overload(
         )
         _nfev = val_from_ptr(nfev)
         return x, fvec, fjac, ipvt, qtf, _nfev, info
+
+    if isinstance(udata, types.Array):
+        return (
+            lambda fcn,
+            m,
+            n,
+            x,
+            fvec,
+            ftol,
+            xtol,
+            gtol,
+            maxfev,
+            epsfcn,
+            diag,
+            mode,
+            factor,
+            nprint,
+            nfev,
+            fjac,
+            ldfjac,
+            ipvt,
+            qtf,
+            wa1,
+            wa2,
+            wa3,
+            wa4,
+            udata: impl(
+                fcn,
+                m,
+                n,
+                x,
+                fvec,
+                ftol,
+                xtol,
+                gtol,
+                maxfev,
+                epsfcn,
+                diag,
+                mode,
+                factor,
+                nprint,
+                nfev,
+                fjac,
+                ldfjac,
+                ipvt,
+                qtf,
+                wa1,
+                wa2,
+                wa3,
+                wa4,
+                udata.ctypes,
+            )
+        )
 
     if udata is not types.none:
         return impl
@@ -320,7 +380,7 @@ def _lmdif_overload(
             wa2,
             wa3,
             wa4,
-            array(0, dtype=bool_),
+            0,
         )
     )
 
@@ -450,24 +510,6 @@ def lmdif_(
 
 
 @njit
-def _lmdif_args(m, x):
-    # ??? do i need the int32 here?
-    n = int32(x.size)
-    fvec = empty(m, dtype=x.dtype)
-    fjac = empty((m, n), dtype=x.dtype)
-    nfevptr = ptr_from_val(int32(0))
-    ldfjac = m
-    ipvt = empty(n, dtype=int32)
-    qtf = empty(n, dtype=x.dtype)
-    wa = empty(3 * n + m, dtype=x.dtype)
-    wa1 = wa[:n]
-    wa2 = wa[n : 2 * n]
-    wa3 = wa[2 * n : 3 * n]
-    wa4 = wa[3 * n :]
-    return n, fvec, nfevptr, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4
-
-
-@njit
 def lmdif(
     fcn: int64,
     m: int32,
@@ -530,7 +572,18 @@ def lmdif(
         _description_
 
     """
-    n, fvec, nfevptr, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4 = _lmdif_args(m, x)
+    n = int32(x.size)
+    fvec = empty(m, dtype=x.dtype)
+    fjac = empty((m, n), dtype=x.dtype)
+    nfevptr = ptr_from_val(int32(0))
+    ldfjac = m
+    ipvt = empty(n, dtype=int32)
+    qtf = empty(n, dtype=x.dtype)
+    wa = empty(3 * n + m, dtype=x.dtype)
+    wa1 = wa[:n]
+    wa2 = wa[n : 2 * n]
+    wa3 = wa[2 * n : 3 * n]
+    wa4 = wa[3 * n :]
     ftol = ftol or 1.49012e-8
     xtol = xtol or 1.49012e-8
     gtol = gtol or 0.0

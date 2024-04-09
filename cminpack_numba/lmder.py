@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from numba import extending, njit, types
-from numpy import array, bool_, empty, floating, int32, ones
+from numpy import empty, floating, int32, ones
 
 from ._cminpack import Cminpack
 from .utils import _check_dtype, ptr_from_val, ptr_int32, val_from_ptr
@@ -22,15 +22,28 @@ def _lmder1(fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata):
 
 
 @extending.overload(_lmder1)
-def _lmder1_overload(fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata):
+def _lmder1_overload(
+    fcn,
+    m,
+    n,
+    x,
+    fvec,
+    fjac,
+    ldfjac,
+    tol,
+    ipvt,
+    wa,
+    lwa,
+    udata,
+):
     _check_dtype((fvec, fjac, wa), x.dtype)
-    _lmder1_cfunc = Cminpack.lmder1(x.dtype)
+    lmder1_external = Cminpack.lmder1(x.dtype)
 
     @extending.register_jitable
     def impl(fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata):
-        info = _lmder1_cfunc(
+        info = lmder1_external(
             fcn,
-            udata.ctypes,
+            udata,
             m,
             n,
             x.ctypes,
@@ -44,6 +57,21 @@ def _lmder1_overload(fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata
         )
         return x, fvec, fjac, ipvt, info
 
+    if isinstance(udata, types.Array):
+        return lambda fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata: impl(
+            fcn,
+            m,
+            n,
+            x,
+            fvec,
+            fjac,
+            ldfjac,
+            tol,
+            ipvt,
+            wa,
+            lwa,
+            udata.ctypes,
+        )
     if udata is not types.none:
         return impl
     return lambda fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata: impl(
@@ -58,7 +86,7 @@ def _lmder1_overload(fcn, m, n, x, fvec, fjac, ldfjac, tol, ipvt, wa, lwa, udata
         ipvt,
         wa,
         lwa,
-        array(0, dtype=bool_),
+        0,
     )
 
 
@@ -123,18 +151,6 @@ def lmder1_(
 
 
 @njit
-def _lmder1_args(m, x):
-    # ??? do i need the int32 here?
-    n = int32(x.size)
-    lwa = int32(5 * n + m)
-    fvec = empty(m, dtype=x.dtype)
-    fjac = empty((m, n), dtype=x.dtype)
-    wa = empty(lwa, dtype=x.dtype)
-    ipvt = empty(n, dtype=int32)
-    return n, lwa, fvec, fjac, wa, ipvt
-
-
-@njit
 def lmder1(
     fcn: int64,
     m: int32,
@@ -171,8 +187,26 @@ def lmder1(
 
     """
     tol = tol or 1.49012e-8
-    n, lwa, fvec, fjac, wa, ipvt = _lmder1_args(m, x)
-    return _lmder1(fcn, m, n, x.copy(), fvec, fjac, n, tol, ipvt, wa, lwa, udata)
+    n = int32(x.size)
+    lwa = int32(5 * n + m)
+    fvec = empty(m, dtype=x.dtype)
+    fjac = empty((m, n), dtype=x.dtype)
+    wa = empty(lwa, dtype=x.dtype)
+    ipvt = empty(n, dtype=int32)
+    return _lmder1(
+        fcn,
+        m,
+        n,
+        x.copy(),
+        fvec,
+        fjac,
+        m,
+        tol,
+        ipvt,
+        wa,
+        lwa,
+        udata,
+    )
 
 
 # --------------------------------------- lmder -------------------------------------- #
@@ -235,7 +269,7 @@ def _lmder_overload(
     udata,
 ):
     _check_dtype((fvec, fjac, qtf, wa1, wa2, wa3, wa4), x.dtype)
-    _lmder_cfunc = Cminpack.lmder(x.dtype)
+    lmder_external = Cminpack.lmder(x.dtype)
 
     @extending.register_jitable
     def impl(
@@ -264,9 +298,9 @@ def _lmder_overload(
         wa4,
         udata,
     ):
-        info = _lmder_cfunc(
+        info = lmder_external(
             fcn,
-            udata.ctypes,
+            udata,
             m,
             n,
             x.ctypes,
@@ -294,6 +328,58 @@ def _lmder_overload(
         _njev = val_from_ptr(njev)
         return x, fvec, fjac, ipvt, qtf, _nfev, _njev, info
 
+    if isinstance(udata, types.Array):
+        return (
+            lambda fcn,
+            m,
+            n,
+            x,
+            fvec,
+            fjac,
+            ldfjac,
+            ftol,
+            xtol,
+            gtol,
+            maxfev,
+            diag,
+            mode,
+            factor,
+            nprint,
+            nfev,
+            njev,
+            ipvt,
+            qtf,
+            wa1,
+            wa2,
+            wa3,
+            wa4,
+            udata: impl(
+                fcn,
+                m,
+                n,
+                x,
+                fvec,
+                fjac,
+                ldfjac,
+                ftol,
+                xtol,
+                gtol,
+                maxfev,
+                diag,
+                mode,
+                factor,
+                nprint,
+                nfev,
+                njev,
+                ipvt,
+                qtf,
+                wa1,
+                wa2,
+                wa3,
+                wa4,
+                udata.ctypes,
+            )
+        )
     if udata is not types.none:
         return impl
     return (
@@ -344,7 +430,7 @@ def _lmder_overload(
             wa2,
             wa3,
             wa4,
-            array(0, dtype=bool_),
+            0,
         )
     )
 
@@ -475,24 +561,6 @@ def lmder_(
 
 
 @njit
-def _lmder_args(m, x):
-    n = int32(x.size)
-    fvec = empty(m, dtype=x.dtype)
-    fjac = empty((m, n), dtype=x.dtype)
-    ldfjac = m
-    nfevptr = ptr_from_val(int32(0))
-    njevptr = ptr_from_val(int32(0))
-    ipvt = empty(n, dtype=int32)
-    qtf = empty(n, dtype=x.dtype)
-    wa = empty(3 * n + m, dtype=x.dtype)
-    wa1 = wa[:n]
-    wa2 = wa[n : 2 * n]
-    wa3 = wa[2 * n : 3 * n]
-    wa4 = wa[3 * n :]
-    return n, fvec, nfevptr, njevptr, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4
-
-
-@njit
 def lmder(
     fcn: int64,
     m: int32,
@@ -553,9 +621,19 @@ def lmder(
         _description_
 
     """
-    n, fvec, nfevptr, njevptr, fjac, ldfjac, ipvt, qtf, wa1, wa2, wa3, wa4 = (
-        _lmder_args(m, x)
-    )
+    n = int32(x.size)
+    fvec = empty(m, dtype=x.dtype)
+    fjac = empty((m, n), dtype=x.dtype)
+    ldfjac = m
+    nfevptr = ptr_from_val(int32(0))
+    njevptr = ptr_from_val(int32(0))
+    ipvt = empty(n, dtype=int32)
+    qtf = empty(n, dtype=x.dtype)
+    wa = empty(3 * n + m, dtype=x.dtype)
+    wa1 = wa[:n]
+    wa2 = wa[n : 2 * n]
+    wa3 = wa[2 * n : 3 * n]
+    wa4 = wa[3 * n :]
 
     ftol = ftol or 1.49012e-8
     xtol = xtol or 1.49012e-8

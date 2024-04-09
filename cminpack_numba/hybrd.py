@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from numba import extending, njit, types
-from numpy import array, bool_, empty, finfo, floating, int32, ones
+from numpy import empty, finfo, floating, int32, ones
 
 from ._cminpack import Cminpack
 from .utils import _check_dtype, ptr_from_val, ptr_int32, val_from_ptr
@@ -33,13 +33,13 @@ def _hybrd1(
 @extending.overload(_hybrd1)
 def _hybrd1_overload(fcn, n, x, fvec, tol, wa, lwa, udata):
     _check_dtype((fvec, wa), x.dtype)
-    _hybrd1_cfunc = Cminpack.hybrd1(x.dtype)
+    hybrd1_external = Cminpack.hybrd1(x.dtype)
 
     @extending.register_jitable
     def impl(fcn, n, x, fvec, tol, wa, lwa, udata):
-        info = _hybrd1_cfunc(
+        info = hybrd1_external(
             fcn,
-            udata.ctypes,
+            udata,
             n,
             x.ctypes,
             fvec.ctypes,
@@ -48,6 +48,18 @@ def _hybrd1_overload(fcn, n, x, fvec, tol, wa, lwa, udata):
             lwa,
         )
         return x, fvec, info
+
+    if isinstance(udata, types.Array):
+        return lambda fcn, n, x, fvec, tol, wa, lwa, udata: impl(
+            fcn,
+            n,
+            x,
+            fvec,
+            tol,
+            wa,
+            lwa,
+            udata.ctypes,
+        )
 
     if udata is not types.none:
         return impl
@@ -59,7 +71,7 @@ def _hybrd1_overload(fcn, n, x, fvec, tol, wa, lwa, udata):
         tol,
         wa,
         lwa,
-        array(0, dtype=bool_),
+        0,
     )
 
 
@@ -106,17 +118,6 @@ def hybrd1_(
 
 
 @njit
-def _hybrd1_args(
-    x: NDArray[floating],
-) -> tuple[int, int, NDArray[floating], NDArray[floating]]:
-    n = int32(x.size)
-    lwa = int32((n * (3 * n + 13)) // 2)
-    fvec = empty(n, dtype=x.dtype)
-    wa = empty(lwa, dtype=x.dtype)
-    return n, lwa, fvec, wa
-
-
-@njit
 def hybrd1(
     fcn: int,
     x: NDArray[floating],
@@ -144,7 +145,10 @@ def hybrd1(
 
     """
     tol = tol or 1.49012e-8
-    n, lwa, fvec, wa = _hybrd1_args(x)
+    n = int32(x.size)
+    lwa = int32((n * (3 * n + 13)) // 2)
+    fvec = empty(n, dtype=x.dtype)
+    wa = empty(lwa, dtype=x.dtype)
     return _hybrd1(fcn, n, x.copy(), fvec, tol, wa, lwa, udata)
 
 
@@ -216,7 +220,7 @@ def _hybrd_overload(
     udata,
 ):
     _check_dtype((fvec, fjac, qtf, wa1, wa2, wa3, wa4), x.dtype)
-    _hybrd_cfunc = Cminpack.hybrd(x.dtype)
+    hybrd_external = Cminpack.hybrd(x.dtype)
 
     @extending.register_jitable
     def impl(
@@ -245,9 +249,9 @@ def _hybrd_overload(
         wa4,
         udata,
     ):
-        info = _hybrd_cfunc(
+        info = hybrd_external(
             fcn,
-            udata.ctypes,
+            udata,
             n,
             x.ctypes,
             fvec.ctypes,
@@ -273,6 +277,59 @@ def _hybrd_overload(
         )
         _nfev = val_from_ptr(nfev)
         return x, fvec, fjac, r, qtf, _nfev, info
+
+    if isinstance(udata, types.Array):
+        return (
+            lambda fcn,
+            n,
+            x,
+            fvec,
+            xtol,
+            maxfev,
+            ml,
+            mu,
+            epsfcn,
+            diag,
+            mode,
+            factor,
+            nprint,
+            nfev,
+            fjac,
+            ldfjac,
+            r,
+            lr,
+            qtf,
+            wa1,
+            wa2,
+            wa3,
+            wa4,
+            udata: impl(
+                fcn,
+                n,
+                x,
+                fvec,
+                xtol,
+                maxfev,
+                ml,
+                mu,
+                epsfcn,
+                diag,
+                mode,
+                factor,
+                nprint,
+                nfev,
+                fjac,
+                ldfjac,
+                r,
+                lr,
+                qtf,
+                wa1,
+                wa2,
+                wa3,
+                wa4,
+                udata.ctypes,
+            )
+        )
 
     if udata is not types.none:
         return impl
@@ -324,7 +381,7 @@ def _hybrd_overload(
             wa2,
             wa3,
             wa4,
-            array(0, dtype=bool_),
+            0,
         )
     )
 
@@ -454,25 +511,6 @@ def hybrd_(
 
 
 @njit
-def _hybrd_args(x):
-    n = int32(x.size)
-    fvec = empty(n, dtype=x.dtype)
-    nfevptr = ptr_from_val(int32(0))
-    fjac = empty((n, n), dtype=x.dtype)
-    ldfjac = n
-    lr = (n * (n + 1)) // 2
-    r = empty(lr, dtype=x.dtype)
-    qtf = empty(n, dtype=x.dtype)
-    wa = empty(4 * n, dtype=x.dtype)
-    wa1 = wa[:n]
-    wa2 = wa[n : 2 * n]
-    wa3 = wa[2 * n : 3 * n]
-    wa4 = wa[3 * n :]
-
-    return n, fvec, nfevptr, fjac, ldfjac, lr, r, qtf, wa1, wa2, wa3, wa4
-
-
-@njit
 def hybrd(
     fcn: int64,
     x: NDArray[floating],
@@ -532,7 +570,19 @@ def hybrd(
         _description_
 
     """
-    n, fvec, nfevptr, fjac, ldfjac, lr, r, qtf, wa1, wa2, wa3, wa4 = _hybrd_args(x)
+    n = int32(x.size)
+    fvec = empty(n, dtype=x.dtype)
+    nfevptr = ptr_from_val(int32(0))
+    fjac = empty((n, n), dtype=x.dtype)
+    ldfjac = n
+    lr = (n * (n + 1)) // 2
+    r = empty(lr, dtype=x.dtype)
+    qtf = empty(n, dtype=x.dtype)
+    wa = empty(4 * n, dtype=x.dtype)
+    wa1 = wa[:n]
+    wa2 = wa[n : 2 * n]
+    wa3 = wa[2 * n : 3 * n]
+    wa4 = wa[3 * n :]
 
     xtol = xtol or 1.49012e-8
     maxfev = maxfev or 200 * (n + 1)

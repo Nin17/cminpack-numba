@@ -6,6 +6,8 @@ from numpy.typing import NDArray
 
 from ._cminpack import Cminpack
 
+# --------------------------------------- enorm -------------------------------------- #
+
 
 def _enorm(n, x):
     raise NotImplementedError
@@ -13,13 +15,13 @@ def _enorm(n, x):
 
 @extending.overload(_enorm)
 def _enorm_overload(n, x):
-    _enorm_cfunc = Cminpack.enorm(x.dtype)
+    enorm_external = Cminpack.enorm(x.dtype)
 
     def impl(n, x):
         if x.ndim != 1:
             msg = "x must be a 1D array"
             raise ValueError(msg)
-        return _enorm_cfunc(n, x.ctypes)
+        return enorm_external(n, x.ctypes)
 
     return impl
 

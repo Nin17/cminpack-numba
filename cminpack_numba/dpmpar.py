@@ -5,6 +5,8 @@ from numpy import float32, float64, int32
 
 from ._cminpack import Cminpack
 
+# -------------------------------------- dpmpar -------------------------------------- #
+
 
 def _dpmpar(i):
     raise NotImplementedError
@@ -16,20 +18,20 @@ def _sdpmpar(i):
 
 @extending.overload(_dpmpar)
 def _dpmpar_overload(i):
-    _dpmpar_cfunc = Cminpack.dpmpar(types.float64)
+    dpmpar_external = Cminpack.dpmpar(types.float64)
 
     def impl(i):
-        return float64(_dpmpar_cfunc(i))
+        return float64(dpmpar_external(i))
 
     return impl
 
 
 @extending.overload(_sdpmpar)
 def _sdpmpar_overload(i):
-    _sdpmpar_cfunc = Cminpack.dpmpar(types.float32)
+    sdpmpar_external = Cminpack.dpmpar(types.float32)
 
     def impl(i):
-        return float32(_sdpmpar_cfunc(i))
+        return float32(sdpmpar_external(i))
 
     return impl
 

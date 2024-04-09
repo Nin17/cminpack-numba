@@ -55,13 +55,42 @@ def _ensure_cminpack(dtype: str = "") -> None:
         raise ImportError(msg)
 
 
+# Load double and single precision libraries
+try:
+    _cminpack_path = get_extension_path("libcminpack") or find_library("cminpack")
+    _ensure_cminpack()
+    CMINPACK = True
+    binding.load_library_permanently(_cminpack_path)
+except ImportError:
+    warnings.warn(
+        "cminpack not found. Double precision functions unavailable.",
+        stacklevel=1,
+    )
+    CMINPACK = False
+try:
+    _cminpacks_path = get_extension_path("libcminpacks") or find_library("cminpacks")
+    _ensure_cminpack("s")
+    CMINPACKS = True
+    binding.load_library_permanently(_cminpacks_path)
+except ImportError:
+    warnings.warn(
+        "cminpacks not found. Single precision functions unavailable.",
+        stacklevel=1,
+    )
+    CMINPACKS = False
+
+if not (CMINPACK or CMINPACKS):
+    _msg = "cminpack & cminpacks not found."
+    raise ImportError(_msg)
+
+
 class Cminpack:
     """External functions from the cminpack(s) library."""
 
     @staticmethod
     def chkder(
         dtype: types.Float,
-    ) -> types.ExternalFunction:  # TODO(nin17): implement chkder
+    ) -> types.ExternalFunction:
         """Return the external function for chkder.
 
         Parameters
@@ -75,6 +104,19 @@ class Cminpack:
             The external function for chkder
 
         """
+        sig = types.void(
+            types.int32,  # m
+            types.int32,  # n
+            types.CPointer(dtype),  # *x
+            types.CPointer(dtype),  # *fvec
+            types.CPointer(dtype),  # *fjac
+            types.int32,  # ldfjac
+            types.CPointer(dtype),  # *xp
+            types.CPointer(dtype),  # *fvecp
+            types.int32,  # mode
+            types.CPointer(dtype),  # *err
+        )
+        return types.ExternalFunction(_apply_prefix("chkder", dtype), sig)
 
     @staticmethod
     def dpmpar(dtype: types.Float) -> types.ExternalFunction:
@@ -131,7 +173,7 @@ class Cminpack:
 
         """
         sig = types.int32(
-            types.long_,  # fcn
+            types.voidptr,  # fcn
             types.voidptr,  # *p / *udata
             types.int32,  # n
             types.CPointer(dtype),  # *x
@@ -174,7 +216,7 @@ class Cminpack:
 
         """
         sig = types.int32(
-            types.long_,  # fcn
+            types.voidptr,  # fcn
             types.voidptr,  # *p / *udata
             types.int32,  # n
             types.CPointer(dtype),  # *x
@@ -201,7 +243,7 @@ class Cminpack:
 
         """
         sig = types.int32(
-            types.long_,  # fcn
+            types.voidptr,  # fcn
             types.voidptr,  # *p / *udata
             types.int32,  # n
             types.CPointer(dtype),  # *x
@@ -242,7 +284,7 @@ class Cminpack:
 
         """
         sig = types.int32(
-            types.long_,  # fcn
+            types.voidptr,  # fcn
             types.voidptr,  # *p / *udata
             types.int32,  # n
             types.CPointer(dtype),  # *x
@@ -271,7 +313,7 @@ class Cminpack:
 
         """
         sig = types.int32(
-            types.long_,  # fcn
+            types.voidptr,  # fcn
             types.voidptr,  # *p / *udata
             types.int32,  # m
             types.int32,  # n
@@ -314,7 +356,7 @@ class Cminpack:
 
         """
         sig = types.int32(
-            types.long_,  # fcn
+            types.voidptr,  # fcn
             types.voidptr,  # *p / *udata
             types.int32,  # m
             types.int32,  # n
@@ -343,7 +385,7 @@ class Cminpack:
 
         """
         sig = types.int32(
-            types.long_,  # fcn
+            types.voidptr,  # fcn
             types.voidptr,  # *p / *udata
             types.int32,  # m
             types.int32,  # n
@@ -386,7 +428,7 @@ class Cminpack:
 
         """
         sig = types.int32(
-            types.long_,  # fcn
+            types.voidptr,  # fcn
             types.voidptr,  # *p / *udata
             types.int32,  # m
             types.int32,  # n
@@ -419,7 +461,7 @@ class Cminpack:
 
         """
         sig = types.int32(
-            types.long_,  # fcn
+            types.voidptr,  # fcn
             types.voidptr,  # *p / *udata
             types.int32,  # m
             types.int32,  # n
@@ -462,45 +504,17 @@ class Cminpack:
 
         """
         sig = types.int32(
-            types.long_,  # fcn
+            types.voidptr,  # fcn
             types.voidptr,  # *p / *udata
             types.int32,  # m
             types.int32,  # n
             types.CPointer(dtype),  # *x
             types.CPointer(dtype),  # *fvec
             types.CPointer(dtype),  # *fjac
+            types.int32, # ldfjac
             dtype,  # tol
             types.CPointer(types.int32),  # *ipvt
             types.CPointer(dtype),  # *wa
             types.int32,  # lwa
         )
         return types.ExternalFunction(_apply_prefix("lmstr1", dtype), sig)
-
-
-# Load double and single precision libraries
-try:
-    _cminpack_path = get_extension_path("libcminpack") or find_library("cminpack")
-    _ensure_cminpack()
-    CMINPACK = True
-    binding.load_library_permanently(_cminpack_path)
-except ImportError:
-    warnings.warn(
-        "cminpack not found. Double precision functions unavailable.",
-        stacklevel=1,
-    )
-    CMINPACK = False
-try:
-    _cminpacks_path = get_extension_path("libcminpacks") or find_library("cminpacks")
-    _ensure_cminpack("s")
-    CMINPACKS = True
-    binding.load_library_permanently(_cminpacks_path)
-except ImportError:
-    warnings.warn(
-        "cminpacks not found. Single precision functions unavailable.",
-        stacklevel=1,
-    )
-    CMINPACKS = False
-
-if not (CMINPACK or CMINPACKS):
-    _msg = "cminpack & cminpacks not found."
-    raise ImportError(_msg)

@@ -5,6 +5,7 @@ __version__ = "0.1.0"
 
 # TODO(nin17): import functions for implementing bounds
 
+from .chkder import chkder
 from .dpmpar import dpmpar, sdpmpar
 from .enorm import enorm, enorm_
 from .hybrd import hybrd, hybrd1, hybrd1_, hybrd_
@@ -25,12 +26,14 @@ from .signatures import (
     slmdif_sig,
     slmstr_sig,
 )
-from .utils import aavp, check_cfunc
+from .utils import address_as_void_pointer, check_cfunc, ptr_from_val, val_from_ptr
 
 __all__ = [
     # Utils
-    "aavp",
+    "address_as_void_pointer",
     "check_cfunc",
+    "ptr_from_val",
+    "val_from_ptr",
     # Signatures
     "hybrd_sig",
     "shybrd_sig",
@@ -46,7 +49,7 @@ __all__ = [
     # Functions
     "enorm",
     "enorm_",
-    # "chkder",
+    "chkder",
     "dpmpar",
     "sdpmpar",
     "hybrd1",

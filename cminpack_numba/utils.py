@@ -49,9 +49,6 @@ def address_as_void_pointer(
     return sig, codegen
 
 
-aavp = address_as_void_pointer
-
-
 @intrinsic
 def ptr_from_val(typingctx, src: Type) -> tuple[Signature, callable]:
     """Pointer from given value.

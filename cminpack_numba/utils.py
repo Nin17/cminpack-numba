@@ -178,7 +178,7 @@ def get_extension_path(lib_name: str) -> str:
 
     """
     search_path = Path(__file__).parent
-    ext_path = f"**/*{lib_name}.*"
+    ext_path = f"**/*[!_]{lib_name}.*"
     matches = search_path.glob(ext_path)
     try:
         return str(next(matches))

@@ -4,7 +4,7 @@ requires = ['py-build-cmake~=0.1.8']
 
 [project]
 name = 'cminpack_numba'
-version= '0.1.0'
+version= '0.1.1'
 description = 'A numba compatible wrapper of cminpack.'
 readme = 'README.md'
 license = {file = 'LICENSE'}

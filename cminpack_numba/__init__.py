@@ -1,6 +1,6 @@
 """A numba wrapper for the cminpack library."""
 
-__version__ = "0.1.0"
+__version__ = "0.1.1"
 
 
 # TODO(nin17): import functions for implementing bounds

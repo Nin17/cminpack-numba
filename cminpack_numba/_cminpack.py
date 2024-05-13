@@ -49,7 +49,7 @@ def _ensure_cminpack(dtype: str = "") -> None:
     """
     if (
         find_library(f"cminpack{dtype}") is None
-        and get_extension_path(f"libcminpack{dtype}") is None
+        and get_extension_path(f"cminpack{dtype}") is None
     ):
         msg = f"cminpack{dtype} library not found"
         raise ImportError(msg)
@@ -57,7 +57,7 @@ def _ensure_cminpack(dtype: str = "") -> None:
 
 # Load double and single precision libraries
 try:
-    _cminpack_path = get_extension_path("libcminpack") or find_library("cminpack")
+    _cminpack_path = get_extension_path("cminpack") or find_library("cminpack")
     _ensure_cminpack()
     CMINPACK = True
     binding.load_library_permanently(_cminpack_path)
@@ -68,7 +68,7 @@ except ImportError:
     )
     CMINPACK = False
 try:
-    _cminpacks_path = get_extension_path("libcminpacks") or find_library("cminpacks")
+    _cminpacks_path = get_extension_path("cminpacks") or find_library("cminpacks")
     _ensure_cminpack("s")
     CMINPACKS = True
     binding.load_library_permanently(_cminpacks_path)

@@ -6,8 +6,6 @@ A numba wrapper of cminpack.
 
 ## Installation
 
-Clone the repository and its submodules `git clone --recurse-submodules` and `cd` to the directory, then:
-
 ```shell
-pip install .
+pip install cminpack_numba
 ```

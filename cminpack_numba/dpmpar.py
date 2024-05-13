@@ -3,7 +3,7 @@
 from numba import extending, njit, types
 from numpy import float32, float64, int32
 
-from ._cminpack import Cminpack
+from .cminpack_ import Cminpack
 
 # -------------------------------------- dpmpar -------------------------------------- #
 

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from numba import extending, njit, types
 from numpy import empty, finfo, floating, int32, ones
 
-from ._cminpack import Cminpack
+from .cminpack_ import Cminpack
 from .utils import _check_dtype, ptr_from_val, ptr_int32, val_from_ptr
 
 if TYPE_CHECKING:

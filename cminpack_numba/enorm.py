@@ -4,7 +4,7 @@ from numba import extending, njit
 from numpy import floating, int32
 from numpy.typing import NDArray
 
-from ._cminpack import Cminpack
+from .cminpack_ import Cminpack
 
 # --------------------------------------- enorm -------------------------------------- #
 

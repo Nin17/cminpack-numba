@@ -1,0 +1,3 @@
+[submodule "cminpack"]
+	path = cminpack
+	url = git@github.com:Nin17/cminpack.git

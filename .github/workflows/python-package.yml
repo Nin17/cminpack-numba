@@ -34,12 +34,12 @@ jobs:
         python -m pip install pytest ruff .
     - name: Lint with Ruff
       run: |
-        pip install ruff
         ruff --output-format=github .
       continue-on-error: true
     - name: Test with pytest
       run: |
         pytest
+
   build-macos:
 
     runs-on: macos-latest
@@ -64,12 +64,12 @@ jobs:
         python -m pip install pytest ruff .
     - name: Lint with Ruff
       run: |
-        pip install ruff
         ruff --output-format=github .
       continue-on-error: true
     - name: Test with pytest
       run: |
         pytest
+
   build-windows:
 
     runs-on: windows-latest
@@ -94,7 +94,6 @@ jobs:
         python -m pip install pytest ruff .
     - name: Lint with Ruff
       run: |
-        pip install ruff
         ruff --output-format=github .
       continue-on-error: true
     - name: Test with pytest

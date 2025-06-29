@@ -7,8 +7,6 @@ from numpy.testing import assert_allclose, assert_equal
 from cminpack_numba import enorm, lmstr, lmstr1, lmstr1_, lmstr_, lmstr_sig
 from cminpack_numba.utils import ptr_from_val, val_from_ptr
 
-# ruff: noqa: ANN001, ARG001, PLR2004
-
 UDATA = array([10.0, 1.0])
 REFERENCE = array([1.0, 1.0])
 TOL = sqrt(finfo(float64).eps)
@@ -24,7 +22,7 @@ WA = empty(LWA)
 DIAG = ones(N)
 
 
-def _check_result(x, fvec, info, nfev=None, njev=None, tol=TOL) -> None:  # noqa: PLR0913
+def _check_result(x, fvec, info, nfev=None, njev=None, tol=TOL) -> None:
     assert_equal(info, 4)
     if nfev is not None:
         assert_equal(nfev, 21)
@@ -35,7 +33,7 @@ def _check_result(x, fvec, info, nfev=None, njev=None, tol=TOL) -> None:  # noqa
 
 
 @cfunc(lmstr_sig)
-def trial_lmstr_fcn(udata, m, n, x, fvec, fjrow, iflag):  # noqa: ANN201, D103, PLR0913
+def trial_lmstr_fcn(udata, m, n, x, fvec, fjrow, iflag):
     if iflag == 1:
         fvec[0] = 10.0 * (x[1] - x[0] ** 2)
         fvec[1] = 1.0 - x[0]
@@ -49,7 +47,7 @@ def trial_lmstr_fcn(udata, m, n, x, fvec, fjrow, iflag):  # noqa: ANN201, D103, 
 
 
 @cfunc(lmstr_sig)
-def trial_lmstr_fcn_udata(udata, m, n, x, fvec, fjrow, iflag):  # noqa: ANN201, D103, PLR0913
+def trial_lmstr_fcn_udata(udata, m, n, x, fvec, fjrow, iflag):
     y = carray(udata, (2,), dtype=float64)
     if iflag == 1:
         fvec[0] = y[0] * (x[1] - x[0] ** 2)
@@ -64,7 +62,7 @@ def trial_lmstr_fcn_udata(udata, m, n, x, fvec, fjrow, iflag):  # noqa: ANN201, 
 
 
 @njit
-def driver(address, udata=None):  # noqa: ANN201, D103
+def driver(address, udata=None):
     x = X0.copy()
 
     fvec = empty(M)

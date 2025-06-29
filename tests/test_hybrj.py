@@ -9,8 +9,6 @@ from cminpack_numba.utils import ptr_from_val, val_from_ptr
 
 from .test_hybrd import UDATA, trial_hybrd_fcn, trial_hybrd_fcn_udata
 
-# ruff: noqa: ANN001, ARG001
-
 REFERENCE = array(
     [
         -0.5706545,
@@ -34,7 +32,7 @@ DIAG = ones(N)
 WA = empty(LWA)
 
 
-def _check_result(x, fvec, info, nfev=None, njev=None, tol=TOL) -> None:  # noqa: PLR0913
+def _check_result(x, fvec, info, nfev=None, njev=None, tol=TOL) -> None:
     assert_equal(info, 1)
     if nfev is not None:
         assert_equal(nfev, 14)  # ??? this is 15 in the original test
@@ -45,7 +43,7 @@ def _check_result(x, fvec, info, nfev=None, njev=None, tol=TOL) -> None:  # noqa
 
 
 @cfunc(hybrj_sig)
-def trial_hybrj_fcn(udata, n, x, fvec, fjac, ldfjac, iflag):  # noqa: ANN201, D103, PLR0913
+def trial_hybrj_fcn(udata, n, x, fvec, fjac, ldfjac, iflag):
     if iflag == 1:
         trial_hybrd_fcn(udata, n, x, fvec, iflag)
     else:
@@ -61,7 +59,7 @@ def trial_hybrj_fcn(udata, n, x, fvec, fjac, ldfjac, iflag):  # noqa: ANN201, D1
 
 
 @cfunc(hybrj_sig)
-def trial_hybrj_fcn_udata(udata, n, x, fvec, fjac, ldfjac, iflag):  # noqa: ANN201, D103, PLR0913
+def trial_hybrj_fcn_udata(udata, n, x, fvec, fjac, ldfjac, iflag):
     _udata = carray(udata, (4,), dtype=float64)
     if iflag == 1:
         trial_hybrd_fcn_udata(udata, n, x, fvec, iflag)
@@ -78,7 +76,7 @@ def trial_hybrj_fcn_udata(udata, n, x, fvec, fjac, ldfjac, iflag):  # noqa: ANN2
 
 
 @njit
-def driver(address, udata=None):  # noqa: ANN201, D103
+def driver(address, udata=None):
     nfevptr = ptr_from_val(int32(0))
     njevptr = ptr_from_val(int32(0))
     x = X0.copy()

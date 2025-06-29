@@ -9,8 +9,6 @@ from numpy.testing import assert_allclose, assert_equal
 from cminpack_numba import enorm, hybrd, hybrd1, hybrd1_, hybrd_, hybrd_sig
 from cminpack_numba.utils import ptr_from_val, val_from_ptr
 
-# ruff: noqa: ANN001, ARG001
-
 UDATA = array([3.0, 2.0, 1.0, 0.0])
 REFERENCE = array(
     [
@@ -42,7 +40,7 @@ def _check_result(x, fvec, info, nfev=None, tol=TOL) -> None:
 
 
 @cfunc(hybrd_sig)
-def trial_hybrd_fcn(udata, n, x, fvec, iflag):  # noqa: ANN201, D103
+def trial_hybrd_fcn(udata, n, x, fvec, iflag):
     if iflag == 0:
         return 0
     for k in range(n):
@@ -54,7 +52,7 @@ def trial_hybrd_fcn(udata, n, x, fvec, iflag):  # noqa: ANN201, D103
 
 
 @cfunc(hybrd_sig)
-def trial_hybrd_fcn_udata(udata, n, x, fvec, iflag):  # noqa: ANN201, D103
+def trial_hybrd_fcn_udata(udata, n, x, fvec, iflag):
     udata = carray(udata, (4,), dtype=float64)
     if iflag == 0:
         return 0
@@ -67,7 +65,7 @@ def trial_hybrd_fcn_udata(udata, n, x, fvec, iflag):  # noqa: ANN201, D103
 
 
 @njit
-def driver(address, udata=None):  # noqa: ANN201, D103
+def driver(address, udata=None):
     nfevptr = ptr_from_val(int32(0))
     x = X0.copy()
     fvec = empty(N)

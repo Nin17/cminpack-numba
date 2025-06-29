@@ -7,8 +7,6 @@ from numpy.testing import assert_allclose, assert_equal
 from cminpack_numba import chkder, enorm, lmder, lmder1, lmder1_, lmder_, lmder_sig
 from cminpack_numba.utils import ptr_from_val
 
-# ruff: noqa: ANN001, ARG001, S101, PLR2004
-
 UDATA = array(
     [
         1.4e-1,
@@ -41,14 +39,14 @@ WA = empty(LWA)
 DIAG = ones(N)
 
 
-def _check_results(x, fvec, info, tol=TOL):  # noqa: ANN202
+def _check_results(x, fvec, info, tol=TOL):
     assert_equal(info, 1)
     assert_allclose(x, REFERENCE, atol=100 * tol)
     assert_allclose(enorm(fvec), 0.9063596e-1, tol)
 
 
 @cfunc(lmder_sig)
-def trial_lmder_fcn(udata, m, n, x, fvec, fjac, ldfjac, iflag):  # noqa: ANN201, D103, PLR0913
+def trial_lmder_fcn(udata, m, n, x, fvec, fjac, ldfjac, iflag):
     y = UDATA
     if iflag == 1:
         for i in range(m):
@@ -70,7 +68,7 @@ def trial_lmder_fcn(udata, m, n, x, fvec, fjac, ldfjac, iflag):  # noqa: ANN201,
 
 
 @cfunc(lmder_sig)
-def trial_lmder_fcn_udata(udata, m, n, x, fvec, fjac, ldfjac, iflag):  # noqa: ANN201, D103, PLR0913
+def trial_lmder_fcn_udata(udata, m, n, x, fvec, fjac, ldfjac, iflag):
     y = carray(udata, (15,), dtype=float64)
     if iflag == 1:
         for i in range(m):
@@ -92,19 +90,19 @@ def trial_lmder_fcn_udata(udata, m, n, x, fvec, fjac, ldfjac, iflag):  # noqa: A
 
 
 @njit
-def driver_trial_lmder_fcn(udata, m, n, x, fvec, fjac, ldfjac, iflag):  # noqa: ANN201, D103, PLR0913
+def driver_trial_lmder_fcn(udata, m, n, x, fvec, fjac, ldfjac, iflag):
     args = udata.ctypes, m, n, x.ctypes, fvec.ctypes, fjac.ctypes, ldfjac, iflag
     return trial_lmder_fcn(*args)
 
 
 @njit
-def driver_trial_lmder_fcn_udata(udata, m, n, x, fvec, fjac, ldfjac, iflag):  # noqa: ANN201, D103, PLR0913
+def driver_trial_lmder_fcn_udata(udata, m, n, x, fvec, fjac, ldfjac, iflag):
     args = udata.ctypes, m, n, x.ctypes, fvec.ctypes, fjac.ctypes, ldfjac, iflag
     return trial_lmder_fcn_udata(*args)
 
 
 @njit
-def driver(address, udata=None):  # noqa: ANN201, D103
+def driver(address, udata=None):
     nfevptr = ptr_from_val(int32(0))
     njevptr = ptr_from_val(int32(0))
     x = X0.copy()

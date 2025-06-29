@@ -7,8 +7,6 @@ from numpy.testing import assert_allclose, assert_equal
 from cminpack_numba import enorm, lmdif, lmdif1, lmdif1_, lmdif_, lmdif_sig
 from cminpack_numba.utils import ptr_from_val
 
-# ruff: noqa: ANN001, ARG001, S101, PLR2004
-
 UDATA = array(
     [
         1.4e-1,
@@ -41,14 +39,14 @@ LWA = M * N + 5 * N + M
 WA = empty(LWA)
 
 
-def _check_results(x, fvec, info, tol=TOL):  # noqa: ANN202
+def _check_results(x, fvec, info, tol=TOL):
     assert_equal(info, 1)
     assert_allclose(x, REFERENCE, atol=100 * tol)
     assert_allclose(enorm(fvec), 0.9063596e-1, atol=tol)
 
 
 @cfunc(lmdif_sig)
-def trial_lmdif_fcn(udata, m, n, x, fvec, iflag):  # noqa: ANN201, D103, PLR0913
+def trial_lmdif_fcn(udata, m, n, x, fvec, iflag):
     y = UDATA
 
     if iflag == 0:
@@ -65,7 +63,7 @@ def trial_lmdif_fcn(udata, m, n, x, fvec, iflag):  # noqa: ANN201, D103, PLR0913
 
 
 @cfunc(lmdif_sig)
-def trial_lmdif_fcn_udata(udata, m, n, x, fvec, iflag):  # noqa: ANN201, D103, PLR0913
+def trial_lmdif_fcn_udata(udata, m, n, x, fvec, iflag):
     y = carray(udata, (15,), dtype=float64)
 
     if iflag == 0:
@@ -82,7 +80,7 @@ def trial_lmdif_fcn_udata(udata, m, n, x, fvec, iflag):  # noqa: ANN201, D103, P
 
 
 @njit
-def driver(address, udata=None):  # noqa: ANN201, D103
+def driver(address, udata=None):
     x = X0.copy()
     diag = DIAG.copy()
     fvec = empty(M)

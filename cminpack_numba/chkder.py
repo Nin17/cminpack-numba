@@ -1,4 +1,4 @@
-"""_summary_"""
+"""Numba overload for chkder function."""
 
 from numba import extending, njit
 

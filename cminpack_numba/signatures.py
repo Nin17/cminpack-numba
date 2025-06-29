@@ -10,17 +10,17 @@ if TYPE_CHECKING:
     from numba.core.typing import Signature
 
 __all__ = [
-    "hybrd_sig",
-    "shybrd_sig",
-    "hybrj_sig",
-    "shybrj_sig",
-    "lmdif_sig",
-    "slmdif_sig",
-    "lmder_sig",
-    "slmder_sig",
-    "lmstr_sig",
-    "slmstr_sig",
     "CminpackSignature",
+    "hybrd_sig",
+    "hybrj_sig",
+    "lmder_sig",
+    "lmdif_sig",
+    "lmstr_sig",
+    "shybrd_sig",
+    "shybrj_sig",
+    "slmder_sig",
+    "slmdif_sig",
+    "slmstr_sig",
 ]
 
 

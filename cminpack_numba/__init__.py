@@ -1,10 +1,11 @@
 """A numba wrapper for the cminpack library."""
 
-__version__ = "0.1.1"
+__version__ = "0.1.4"
 
 
 # TODO(nin17): import functions for implementing bounds
 
+from .bounds import ext2in, in2ext, in2ext_grad
 from .chkder import chkder
 from .dpmpar import dpmpar, sdpmpar
 from .enorm import enorm, enorm_
@@ -46,6 +47,10 @@ __all__ = [
     "lmstr_sig",
     "slmstr_sig",
     "CminpackSignature",
+    # Bounds
+    "in2ext",
+    "ext2in",
+    "in2ext_grad",
     # Functions
     "enorm",
     "enorm_",

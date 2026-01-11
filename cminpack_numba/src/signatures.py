@@ -32,7 +32,7 @@ class CminpackSignature:
         udata_type: types.Type = types.voidptr,
         dtype: types.Float = types.float64,
     ) -> Signature:
-        """Signature for the function passed to the `hybrd` & `shybrd` functions.
+        """Signature for `fcn` argument of [hybrd][cminpack_numba.hybrd] like functions.
 
         Parameters
         ----------
@@ -60,7 +60,7 @@ class CminpackSignature:
         udata_type: types.Type = types.voidptr,
         dtype: types.Float = types.float64,
     ) -> Signature:
-        """Signature for the function passed to the `hybrj` & `shybrj` functions.
+        """Signature for `fcn` argument of [hybrj][cminpack_numba.hybrj] like functions.
 
         Parameters
         ----------
@@ -90,7 +90,7 @@ class CminpackSignature:
         udata_type: types.Type = types.voidptr,
         dtype: types.Float = types.float64,
     ) -> Signature:
-        """Signature for the function passed to the `lmdif` & `slmdif` functions.
+        """Signature for `fcn` argument of [lmdif][cminpack_numba.lmdif] like functions.
 
         Parameters
         ----------
@@ -119,7 +119,7 @@ class CminpackSignature:
         udata_type: types.Type = types.voidptr,
         dtype: types.Float = types.float64,
     ) -> Signature:
-        """Signature for the function passed to the `lmder` & `slmder` functions.
+        """Signature for `fcn` argument of [lmder][cminpack_numba.lmder] like functions.
 
         Parameters
         ----------
@@ -150,7 +150,7 @@ class CminpackSignature:
         udata_type: types.Type = types.voidptr,
         dtype: types.Float = types.float64,
     ) -> Signature:
-        """Signature for the function passed to the `lmstr` & `slmstr` functions.
+        """Signature for `fcn` argument of [lmstr][cminpack_numba.lmstr] like functions.
 
         Parameters
         ----------
@@ -179,18 +179,26 @@ class CminpackSignature:
 # __cminpack_type_fcn_nn__
 hybrd_sig = CminpackSignature.hybrd()
 """
+Signature for `fcn` argument of [hybrd][cminpack_numba.hybrd] &
+[hybrd1][cminpack_numba.hybrd1] with double precision arrays.
+
 (udata: void*, n: int32, x: float64*, fvec: float64*, iflag: int32) -> int32
 """
-
 # __cminpack_type_fcn_nn__
 shybrd_sig = CminpackSignature.hybrd(dtype=types.float32)
 """
+Signature for `fcn` argument of [hybrd][cminpack_numba.hybrd] &
+[hybrd1][cminpack_numba.hybrd1] with single precision arrays.
+
 (udata: void*, n: int32, x: float32*, fvec: float32*, iflag: int32) -> int32
 """
 
 # __cminpack_type_fcnder_nn__
 hybrj_sig = CminpackSignature.hybrj()
 """
+Signature for `fcn` argument of [hybrj][cminpack_numba.hybrj] &
+[hybrj1][cminpack_numba.hybrj1] with double precision arrays.
+
 (udata: void*, n: int32, x: float64*, fvec: float64*, fjac: float64*,
     ldfjac: int32, iflag:int32) -> int32
 """
@@ -198,6 +206,9 @@ hybrj_sig = CminpackSignature.hybrj()
 # __cminpack_type_fcnder_nn__
 shybrj_sig = CminpackSignature.hybrj(dtype=types.float32)
 """
+Signature for `fcn` argument of [hybrj][cminpack_numba.hybrj] &
+[hybrj1][cminpack_numba.hybrj1] with single precision arrays.
+
 (udata: void*, n: int32, x: float32*, fvec: float32*, fjac: float32*,
     ldfjac: int32, iflag:int32) -> int32
 """
@@ -205,6 +216,9 @@ shybrj_sig = CminpackSignature.hybrj(dtype=types.float32)
 # __cminpack_type_fcn_mn__
 lmdif_sig = CminpackSignature.lmdif()
 """
+Signature for `fcn` argument of [lmdif][cminpack_numba.lmdif] &
+[lmdif1][cminpack_numba.lmdif1] with double precision arrays.
+
 (udata: void*, m: int32, n: int32, x: float64*, fvec: float64*, iflag: int32)
     -> int32
 """
@@ -212,6 +226,9 @@ lmdif_sig = CminpackSignature.lmdif()
 # __cminpack_type_fcn_mn_s__
 slmdif_sig = CminpackSignature.lmdif(dtype=types.float32)
 """
+Signature for `fcn` argument of [lmdif][cminpack_numba.lmdif] &
+[lmdif1][cminpack_numba.lmdif1] with single precision arrays.
+
 (udata: void*, m: int32, n: int32, x: float32*, fvec: float32*, iflag: int32)
     -> int32
 """
@@ -219,6 +236,9 @@ slmdif_sig = CminpackSignature.lmdif(dtype=types.float32)
 # __cminpack_type_fcnder_mn__
 lmder_sig = CminpackSignature.lmder()
 """
+Signature for `fcn` argument of [lmder][cminpack_numba.lmder] &
+[lmder1][cminpack_numba.lmder1] with double precision arrays.
+
 (udata: void*, m: int32, n: int32, x: float64*, fvec: float64*, fjac: float64*,
     ldfjac: int32, iflag: int32) -> int32
 """
@@ -226,6 +246,9 @@ lmder_sig = CminpackSignature.lmder()
 # __cminpack_type_fcnder_mn__
 slmder_sig = CminpackSignature.lmder(dtype=types.float32)
 """
+Signature for `fcn` argument of [lmder][cminpack_numba.lmder] &
+[lmder1][cminpack_numba.lmder1] with single precision arrays.
+
 (udata: void*, m: int32, n: int32, x: float32*, fvec: float32*, fjac: float32*,
     ldfjac: int32, iflag: int32) -> int32
 """
@@ -233,6 +256,9 @@ slmder_sig = CminpackSignature.lmder(dtype=types.float32)
 # __cminpack_type_fcnderstr_mn__
 lmstr_sig = CminpackSignature.lmstr()
 """
+Signature for `fcn` argument of [lmstr][cminpack_numba.lmstr] &
+[lmstr1][cminpack_numba.lmstr1] with double precision arrays.
+
 (udata: void*, m: int32, n: int32, x: float64*, fvec: float64*, fjac: float64*,
     iflag: int32) -> int32
 """
@@ -240,6 +266,9 @@ lmstr_sig = CminpackSignature.lmstr()
 # __cminpack_type_fcnderstr_mn__
 slmstr_sig = CminpackSignature.lmstr(dtype=types.float32)
 """
+Signature for `fcn` argument of [lmstr][cminpack_numba.lmstr] &
+[lmstr1][cminpack_numba.lmstr1] with single precision arrays.
+
 (udata: void*, m: int32, n: int32, x: float32*, fvec: float32*, fjac: float32*,
     iflag: int32) -> int32
 """

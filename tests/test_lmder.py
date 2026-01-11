@@ -4,7 +4,9 @@ from numba import carray, cfunc, njit
 from numpy import array, empty, finfo, float64, int32, ones, sqrt
 from numpy.testing import assert_allclose, assert_equal
 
-from cminpack_numba import chkder, enorm, lmder, lmder1, lmder1_, lmder_, lmder_sig
+from cminpack_numba import chkder, enorm, lmder, lmder1
+from cminpack_numba.signatures import lmder_sig
+from cminpack_numba.src import lmder1_, lmder_
 from cminpack_numba.utils import ptr_from_val
 
 UDATA = array(

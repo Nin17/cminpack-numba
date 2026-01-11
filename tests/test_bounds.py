@@ -1,11 +1,14 @@
-"""_summary_"""
+"""Test bounded solvers."""
 
-from cminpack_numba import in2ext, in2ext_grad, lmder, lmder_sig, lmdif, lmdif_sig
 from numba import carray, cfunc, njit
 from numba.types import float64
 from numpy import array, inf, take
 from numpy.linalg import norm
 from numpy.testing import assert_, assert_allclose
+
+from cminpack_numba import lmder, lmdif
+from cminpack_numba.signatures import lmder_sig, lmdif_sig
+from cminpack_numba.src.bounds import in2ext, in2ext_grad
 
 
 @cfunc(lmdif_sig)
@@ -47,7 +50,7 @@ def jac_rosenbrock(x):
         [
             [-20 * x[0], 10],
             [-1, 0],
-        ]
+        ],
     )
 
 

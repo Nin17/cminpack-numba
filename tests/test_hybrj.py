@@ -4,7 +4,9 @@ from numba import carray, cfunc, njit
 from numpy import array, empty, finfo, float64, full, int32, ones, sqrt
 from numpy.testing import assert_allclose, assert_equal
 
-from cminpack_numba import enorm, hybrj, hybrj1, hybrj1_, hybrj_, hybrj_sig
+from cminpack_numba import enorm, hybrj, hybrj1
+from cminpack_numba.signatures import hybrj_sig
+from cminpack_numba.src import hybrj1_, hybrj_
 from cminpack_numba.utils import ptr_from_val, val_from_ptr
 
 from .test_hybrd import UDATA, trial_hybrd_fcn, trial_hybrd_fcn_udata

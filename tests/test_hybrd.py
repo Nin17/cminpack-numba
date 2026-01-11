@@ -6,7 +6,9 @@ from numba import carray, cfunc, njit
 from numpy import array, empty, finfo, float64, full, int32, ones, sqrt
 from numpy.testing import assert_allclose, assert_equal
 
-from cminpack_numba import enorm, hybrd, hybrd1, hybrd1_, hybrd_, hybrd_sig
+from cminpack_numba import enorm, hybrd, hybrd1
+from cminpack_numba.signatures import hybrd_sig
+from cminpack_numba.src import hybrd1_, hybrd_
 from cminpack_numba.utils import ptr_from_val, val_from_ptr
 
 UDATA = array([3.0, 2.0, 1.0, 0.0])

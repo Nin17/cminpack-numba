@@ -1,8 +1,10 @@
 {
-  "python.testing.pytestArgs": ["tests"],
+  "python.testing.pytestArgs": [
+    "tests",
+ ],
   "python.testing.unittestEnabled": false,
   "python.testing.pytestEnabled": true,
-  "julia.environmentPath": "/Users/chris/Documents/PhD/cminpack_numba",
+  "python.defaultInterpreterPath": "~/envs/numba3.12/bin/python",
   "[python]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {

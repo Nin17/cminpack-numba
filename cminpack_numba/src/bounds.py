@@ -4,20 +4,24 @@ from numba import njit
 from numba.core.errors import NumbaTypeError
 from numba.extending import overload
 from numba.types import NoneType, Number, Optional
-from numpy import arcsin as _arcsin, cos, empty_like, sin, sqrt as _sqrt, pi
+from numpy import arcsin as _arcsin
+from numpy import cos, empty_like, pi, sin
+from numpy import sqrt as _sqrt
+
 
 @njit
 def sqrt(x):
     # print("x=", x)
     return _sqrt(x) if x > 0.0 else 0.0
 
+
 @njit
 def arcsin(x):
     print("hello")
     if x < -1.0:
-        return -pi/2.0
+        return -pi / 2.0
     if x > 1.0:
-        return pi/2.0
+        return pi / 2.0
     return _arcsin(x)
 
 
@@ -49,8 +53,9 @@ def _ext2in_overload(xi, lower, upper):
 
         def impl(xi, lower, upper):
             return arcsin((2.0 * (xi - lower) / (upper - lower)) - 1.0)
-        
+
     if isinstance(lower, Optional) and isinstance(upper, Optional):
+
         def impl(xi, lower, upper):
             if lower is None and upper is None:
                 return xi
@@ -164,8 +169,9 @@ def _in2ext_grad_overload(xi, lower, upper):
 
         def impl(xi, lower, upper):
             return (upper - lower) * cos(xi) / 2.0
-    
+
     if isinstance(lower, Optional) and isinstance(upper, Optional):
+
         def impl(xi, lower, upper):
             if lower is None and upper is None:
                 return 1.0
